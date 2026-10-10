@@ -114,6 +114,34 @@ books, transcribed by a native speaker through a purpose-built browser tool.
 This is the stage that fixes word segmentation and the ҙ/ҫ confusions the
 auto-aligned data cannot teach, because its own labels contain them.
 
+### More transcription stopped helping at around 500 lines
+
+Training the same pipeline on nested subsets of the corrected lines, scored on
+the same held-out set:
+
+| corrected lines | CER | WER |
+|---|---|---|
+| 400 | 4.53% | 16.73% |
+| 800 | 4.45% | 15.81% |
+| 1,200 | 4.51% | 17.31% |
+| 1,718 | 4.24% | 14.71% |
+
+Quadrupling the data moved character error by 0.29 points, and the 1,200-line
+run scored worse than the 800-line one, so some of that is run-to-run noise.
+The curve is flat.
+
+This is worth stating plainly because the intuition is so strong in the other
+direction: the project spent a long stretch collecting more transcriptions on
+the assumption that volume was the constraint. It was not. Past a few hundred
+corrected lines, the remaining error is not data-limited — it is display type
+the model has never seen, dramatic layout, and page images that were cropped
+badly before training ever started. None of those are fixed by typing more
+body text.
+
+If you are building OCR for a low-resource language, measure your learning
+curve early. A few hundred carefully corrected lines may get you most of what
+transcription can give.
+
 ### Three findings that changed the outcome
 
 **Only corrected lines train the model.** Transcription was prefilled with the
@@ -216,6 +244,7 @@ Usable, and better than every alternative, but not finished. Known gaps:
 
 - Display and title type is weak — the one book dominated by it runs 19% CER
 - Drama layout (speaker attributions, stage directions) drives word error
+- More transcription will not fix either; the learning curve is flat
 - No label is independent of a model; see [Evaluation](#evaluation)
 - Not yet submitted upstream to `tessdata_best`
 
