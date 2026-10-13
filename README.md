@@ -246,7 +246,8 @@ Usable, and better than every alternative, but not finished. Known gaps:
 - Drama layout (speaker attributions, stage directions) drives word error
 - More transcription will not fix either; the learning curve is flat
 - No label is independent of a model; see [Evaluation](#evaluation)
-- Not yet submitted upstream to `tessdata_best`
+- Not yet submitted to `tessdata_contrib` — a prepared submission, including
+  an integer `fast` build, is in [tessdata-contrib/](tessdata-contrib/)
 
 ## License
 
