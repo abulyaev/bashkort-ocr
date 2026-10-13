@@ -11,7 +11,7 @@ tesseract page.png out -l bak
 ## Why it did not exist
 
 Bashkort is written in a 42-letter Cyrillic alphabet. Nine of its letters are
-not in Russian: **ә ө ү ң һ ҙ ҫ ҡ ғ**. Five of those — **ҙ ҫ ҡ ғ ң** — differ
+not in Russian: **ә ө ү ң һ ҙ ҫ ҡ ғ**. Five of those (**ҙ ҫ ҡ ғ ң**) differ
 from an ordinary Russian letter *only by a descender below the baseline*:
 
 | Bashkort | Russian | differs by |
@@ -22,21 +22,20 @@ from an ordinary Russian letter *only by a descender below the baseline*:
 | ғ | г | a crossbar and tail |
 | ң | н | a descending hook |
 
-So a scanner that crops a line too tightly deletes exactly the information that
-distinguishes the language from Russian. And `ҫ` (U+04AB) — the voiceless
-interdental fricative /θ/, which among Turkic languages only Bashkort has —
-appears in **no Tesseract character set at all**. Reading Bashkort with an
-existing model is not a matter of accuracy; the letters are unrepresentable.
+A scanner that crops a line too tightly deletes the information that
+distinguishes the language from Russian. And `ҫ` (U+04AB), the voiceless
+interdental fricative /θ/ that among Turkic languages only Bashkort has,
+appears in no Tesseract character set at all. An existing model cannot
+represent these letters, so it cannot output them.
 
-Run Russian over a Bashkort page and every one of the nine letters comes back
-at **0%** recall.
+Run Russian over a Bashkort page and all nine letters come back at 0% recall.
 
 ## Results
 
-Measured on **157 lines transcribed with no model output in front of the
-transcriber** — no prefilled suggestion, no machine reading of the page. These
-labels owe nothing to any model, which makes this a measurement rather than an
-estimate. Pages were drawn from parts of the books no training data came from.
+Measured on 157 lines transcribed with no model output in front of the
+transcriber: no prefilled suggestion, no machine reading of the page. The
+labels owe nothing to any model. Pages came from parts of the books no training
+data was drawn from.
 
 | model | CER | WER | ҫ | ҙ | ҡ | ғ | ң |
 |---|---|---|---|---|---|---|---|
@@ -58,8 +57,8 @@ holds 17 instances; the percentage would overstate the precision.
 | doc257928583 | 25 | 1.07% | 9.58% |
 | Ҡолой кантон | 25 | 0.68% | 4.64% |
 
-A second, larger set of 420 lines — drawn from lines a previous model got
-wrong, so a deliberately hard subset — gives 4.24% CER / 14.71% WER.
+A second, larger set of 420 lines gives 4.24% CER / 14.71% WER. Those are
+lines a previous model got wrong, so it is a deliberately hard subset.
 
 Word error is the weak spot, and it is concentrated in drama: speaker
 attributions, stage directions and dash-led dialogue, where the characters come
@@ -96,7 +95,7 @@ Two stages, both fine-tuning rather than training from scratch.
 recognises eight of the nine Bashkort letters at 81–94%, so the job was adding
 one character to the output layer rather than learning Cyrillic from nothing.
 An earlier attempt used `tat` (Tatar) on the reasoning that Tatar is the
-closest relative — but Tesseract's `tat` is a *Latin-script* model with no
+closest relative. But Tesseract's `tat` is a Latin-script model with no
 Cyrillic at all, which invalidated a whole phase of work before the error was
 caught.
 
@@ -127,13 +126,12 @@ Quadrupling the data moved character error by 0.29 points, and the 1,200-line
 run scored worse than the 800-line one, so some of that is run-to-run noise.
 The curve is flat.
 
-This is worth stating plainly because the intuition is so strong in the other
-direction: the project spent a long stretch collecting more transcriptions on
-the assumption that volume was the constraint. It was not. Past a few hundred
-corrected lines, the remaining error is not data-limited — it is display type
-the model has never seen, dramatic layout, and page images that were cropped
-badly before training ever started. None of those are fixed by typing more
-body text.
+I am stating this plainly because the intuition runs hard the other way. This
+project spent a long stretch collecting more transcriptions on the assumption
+that volume was the constraint. It was not. Past a few hundred corrected lines
+the remaining error came from display type the model had never seen, from
+dramatic layout, and from page images that had been cropped badly before
+training started. Typing more body text fixes none of that.
 
 If you are building OCR for a low-resource language, measure your learning
 curve early. A few hundred carefully corrected lines may get you most of what
@@ -150,8 +148,8 @@ already does, and at that volume they drown the lines that disagree. Half the
 data, better model.
 
 **Rank checkpoints on the real pipeline, not `lstmeval`.** `lstmeval` scores
-the raw LSTM with no dictionary. It chose a checkpoint that splits words —
-`Гөлбәғиҙә` into `Гөл бә ғи ҙ ә` — which costs one character but two words, so
+the raw LSTM with no dictionary. It chose a checkpoint that splits words,
+turning `Гөлбәғиҙә` into `Гөл бә ғи ҙ ә`. That costs one character but two words, so
 it barely registered the fault while real-world WER went from 11.35% to 15.72%.
 Re-ranking every checkpoint through `tesseract` itself picked a different one,
 less than half as deep.
@@ -170,29 +168,29 @@ The evaluation set is the part of this project most worth scrutinising, because
 the obvious way to build it is wrong.
 
 Every line was transcribed with a model's suggestion prefilled. On a line the
-transcriber accepted unchanged, **the ground truth is the model's own output**.
+transcriber accepted unchanged, the ground truth is the model's own output.
 Scoring a model against its own output is circular, and it flatters whichever
 model did the prefilling.
 
 An earlier version of this eval sampled lines no model had trained on. But
 training consumes the *corrected* lines, so what was left was 90% lines
-accepted verbatim — two books were 100% — and the model scored 0.14% CER on
+accepted verbatim, two books at 100%, and the model scored 0.14% CER on
 them. That number was meaningless and is not reported here.
 
-**This was fixed by measuring it properly.** 175 lines were cut from pages no
+This was fixed by measuring it properly. 175 lines were cut from pages no
 training data came from and transcribed with the suggestion box empty and the
 page reading suppressed; 157 were legible enough to label. `tools/autofill.py`
 refuses to touch them and `tools/train_human.py` excludes them from training,
 so they stay independent. The headline figures come from that set.
 
-Two estimates made before it existed are worth recording, because one held and
-one did not. Weighting the hard and easy sets by their share of the corpus
-predicted ~2.0% CER and ~7.7% WER. The real figures are 2.43% and **14.88%**.
-Character error was close; word error was out by a factor of two, because on a
-line accepted verbatim the label *is* the model's output, so its word error is
-near zero by construction and dragged the weighted estimate down. The
-"optimistic bound" was an artifact, not a bound. Measured word error turned out
-to match the hard set almost exactly — 14.88% against 14.71%.
+Two estimates made before that set existed are recorded here, because one held
+and one did not. Weighting the hard and easy sets by their share of the corpus
+predicted roughly 2.0% CER and 7.7% WER. The real figures are 2.43% and 14.88%.
+Character error came close. Word error was out by a factor of two, because on a
+line accepted verbatim the label is the model's own output, so its word error is
+near zero by construction and dragged the weighted estimate down. The optimistic
+bound turned out to be an artifact. Measured word error matched the hard set
+almost exactly, 14.88% against 14.71%.
 
 Scoring:
 
@@ -215,7 +213,7 @@ python3 tools/train_human.py --edited-only --tag v1    # stage 2
 python3 tools/eval_holdout.py --per-book v1
 ```
 
-Stage 1 needs `tessdata_best` — Homebrew ships `tessdata_fast`, which is
+Stage 1 needs `tessdata_best`. Homebrew ships `tessdata_fast`, which is
 integer-quantised and cannot be fine-tuned at all. `combine_lang_model` also
 wants `radical-stroke.txt` from the `langdata` repository, which is not
 mentioned where you would expect.
@@ -243,12 +241,12 @@ See [docs/alphabet.md](docs/alphabet.md) and [docs/orthography.md](docs/orthogra
 
 Usable, and better than every alternative, but not finished. Known gaps:
 
-- Display and title type is weak — the one book dominated by it runs 19% CER
+- Display and title type is weak; the one book dominated by it runs 19% CER
 - Drama layout (speaker attributions, stage directions) drives word error
 - More transcription will not fix either; the learning curve is flat
 - Word error (14.88%) is high relative to character error; drama layout is the
   main driver
-- Not yet submitted to `tessdata_contrib` — a prepared submission, including
+- Not yet submitted to `tessdata_contrib`. A prepared submission, including
   an integer `fast` build, is in [tessdata-contrib/](tessdata-contrib/)
 
 ## License

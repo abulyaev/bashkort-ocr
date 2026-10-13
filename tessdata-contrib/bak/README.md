@@ -1,4 +1,4 @@
-# bak.traineddata — Bashkort / Bashkir
+# bak.traineddata: Bashkort / Bashkir
 
 ## Model card
 
@@ -20,25 +20,25 @@
 | [best/bak.traineddata](best/bak.traineddata) | 4.3 MB | float, fine-tunable |
 | [fast/bak.traineddata](fast/bak.traineddata) | 1.5 MB | integer |
 
-No legacy model — this is LSTM only.
+No legacy model; this is LSTM only.
 
 ## Why Bashkort needs its own model
 
-Nine Bashkort letters are not in Russian: **ә ө ү ң һ ҙ ҫ ҡ ғ**. Five of them —
-**ҙ ҫ ҡ ғ ң** — differ from an ordinary Russian letter only by a descender
+Nine Bashkort letters are not in Russian: **ә ө ү ң һ ҙ ҫ ҡ ғ**. Five of them
+(**ҙ ҫ ҡ ғ ң**) differ from an ordinary Russian letter only by a descender
 below the baseline (ҙ/з, ҫ/с, ҡ/к, ғ/г, ң/н).
 
 **ҫ** (U+04AB), the voiceless interdental fricative /θ/, appears in no existing
 Tesseract unicharset. Among the eight Turkic languages already in tessdata,
 none can produce it. Reading Bashkort with an existing model is therefore not a
-question of accuracy — the letter cannot be output at all.
+question of accuracy; the letter cannot be output at all.
 
 ## Accuracy
 
-157 lines transcribed with **no model output in front of the transcriber** — no
-prefilled suggestion, no machine reading of the page — cut from parts of the
-books no training data came from. Scored through the `tesseract` CLI, not
-`lstmeval`, which cannot see word splitting.
+157 lines transcribed with no model output in front of the transcriber: no
+prefilled suggestion, no machine reading of the page. They were cut from parts
+of the books no training data came from, and scored through the `tesseract`
+CLI rather than `lstmeval`, which cannot see word splitting.
 
 | model | CER | WER | ҫ | ҙ | ҡ | ғ | ң |
 |---|---|---|---|---|---|---|---|
@@ -62,8 +62,8 @@ Per book:
 | prose collection | 25 | 1.07% | 9.58% |
 | historical prose | 25 | 0.68% | 4.64% |
 
-A second, deliberately hard set of 420 lines — drawn from lines a previous
-model got wrong — gives 4.24% CER / 14.71% WER.
+A second set of 420 lines gives 4.24% CER / 14.71% WER. Those are lines a
+previous model got wrong, so it is a deliberately hard subset.
 
 ### On how the evaluation set was built
 
