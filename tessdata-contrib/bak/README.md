@@ -17,8 +17,13 @@
 
 | | size | notes |
 |---|---|---|
-| [best/bak.traineddata](best/bak.traineddata) | 4.3 MB | float, fine-tunable |
-| [fast/bak.traineddata](fast/bak.traineddata) | 1.5 MB | integer |
+| [best/bak.traineddata](best/bak.traineddata) | 3.2 MB | float, fine-tunable |
+| [fast/bak.traineddata](fast/bak.traineddata) | 440 KB | integer |
+
+Neither carries word, punctuation or number dawgs, for the reason in
+[Why no dictionary](#why-no-dictionary). The langdata they were originally
+built from is in [langdata/](langdata/), so a dictionary build can be
+reproduced with `combine_lang_model` by anyone who wants one.
 
 No legacy model; this is LSTM only.
 
@@ -29,9 +34,9 @@ Nine Bashkort letters are not in Russian: **ә ө ү ң һ ҙ ҫ ҡ ғ**. Five o
 below the baseline (ҙ/з, ҫ/с, ҡ/к, ғ/г, ң/н).
 
 **ҫ** (U+04AB), the voiceless interdental fricative /θ/, appears in no existing
-Tesseract unicharset. Among the eight Turkic languages already in tessdata,
-none can produce it. Reading Bashkort with an existing model is therefore not a
-question of accuracy; the letter cannot be output at all.
+Tesseract unicharset. Of the eight Turkic languages already in tessdata, none
+can produce it. An existing model cannot represent the letter, so it cannot
+output it: `rus` scores 0% recall on all nine letters and `kaz` scores 0% on ҫ.
 
 ## Accuracy
 
@@ -42,56 +47,75 @@ CLI rather than `lstmeval`, which cannot see word splitting.
 
 | model | CER | WER | ҫ | ҙ | ҡ | ғ | ң |
 |---|---|---|---|---|---|---|---|
-| **bak (best)** | **2.43%** | **14.88%** | **17/17** | 98% | 97% | 99% | 100% |
-| bak (fast) | 3.17% | 15.27% | — | — | — | — | — |
+| **bak (best)** | **2.32%** | **13.99%** | **17/17** | 98% | 96% | 99% | 100% |
+| bak (fast) | 3.16% | 14.38% | 16/17 | 97% | 97% | 98% | 99% |
 | kaz | 5.42% | 24.04% | 0/17 | 87% | 87% | 98% | 99% |
 | rus | 21.00% | 76.65% | 0/17 | 0% | 0% | 0% | 0% |
 
-`ҫ` is given as a count: the set holds 17 instances, and a percentage would
+ҫ is given as a count: the set holds 17 instances, and a percentage would
 overstate the precision.
 
-Per book:
+Per book, for `best`:
 
 | book | lines | CER | WER |
 |---|---|---|---|
-| drama anthology | 24 | 4.82% | 32.31% |
-| epic poetry | 21 | 3.21% | 19.17% |
-| historical novel | 14 | 3.17% | 15.49% |
-| literary collection | 23 | 2.86% | 16.07% |
-| folk tales | 25 | 2.66% | 13.94% |
-| prose collection | 25 | 1.07% | 9.58% |
-| historical prose | 25 | 0.68% | 4.64% |
+| drama anthology | 24 | 4.48% | 31.54% |
+| literary collection | 23 | 3.22% | 16.67% |
+| historical novel | 14 | 3.17% | 12.68% |
+| epic poetry | 21 | 2.84% | 18.33% |
+| folk tales | 25 | 2.47% | 13.33% |
+| prose collection | 25 | 0.89% | 7.78% |
+| historical prose | 25 | 0.60% | 3.61% |
 
-A second set of 420 lines gives 4.24% CER / 14.71% WER. Those are lines a
-previous model got wrong, so it is a deliberately hard subset.
+Word error is the weak spot and it concentrates in drama: speaker
+attributions, stage directions and dash-led dialogue, where the characters come
+out right and the word boundaries do not.
 
-### On how the evaluation set was built
+A second, deliberately hard set of 420 lines gives 4.27% CER / 13.03% WER.
+Those are lines a previous model got wrong, so the figure is a floor rather
+than typical text.
 
-Transcription was prefilled with the previous model's reading for speed, so on
-any line accepted unchanged the ground truth would be that model's own output
-and scoring against it would be circular. Two earlier evaluation sets here were
-compromised that way; one, built from "lines no model trained on", turned out
-to be 90% unchanged lines and produced a meaningless 0.14% CER.
+## Why no dictionary
 
-The figures above therefore come from lines transcribed blind. The tooling
-enforces it: autofill refuses to write a suggestion onto those rows, and
-training excludes them.
+The models were built with `combine_lang_model` from a 120,000-entry
+frequency-ordered wordlist plus punctuation and number patterns, all taken from
+a 34.6M-character corpus. Measuring what those dawgs contributed showed they
+made word error worse on every evaluation set:
+
+| evaluation set | with dawgs | without dawgs |
+|---|---|---|
+| 157 blind lines | 2.43% CER / 14.88% WER | 2.32% / 13.99% |
+| 420 hard lines | 4.24% / 14.71% | 4.27% / 13.03% |
+| 420 ordinary lines | 0.41% / 2.75% | 0.46% / 2.68% |
+
+Character error barely moves; word error drops every time the dictionary is
+removed.
+
+The likely cause is morphology. Bashkort is agglutinative and inflects heavily,
+so a fixed wordlist of any practical size cannot cover the inflectional space.
+A word form absent from the list gets pulled toward a present one, which breaks
+a whole word while changing only one or two characters. That is precisely the
+shape of the measurements: large WER effect, negligible CER effect.
+
+This may generalise to the other agglutinative languages in tessdata. It is one
+language's measurement, not a proof, but it is cheap for anyone to check with
+`combine_tessdata -u`, deleting the three dawg files, and repacking.
 
 ## Training procedure
 
 **Base.** `kaz`, selected by measurement rather than linguistic proximity. It
 already recognises eight of the nine Bashkort letters at 81–94%, making this an
 "add one character to the output layer" problem. An earlier attempt used `tat`
-on the assumption that Tatar is the closest relative; Tesseract's `tat` is a
+on the assumption that Tatar is the closest relative. Tesseract's `tat` is a
 Latin-script model with no Cyrillic, which invalidated that work.
 
-**Stage 1 — 65,967 auto-aligned lines.** Many Bashkort PDFs carry a commercial
+**Stage 1, 65,967 auto-aligned lines.** Many Bashkort PDFs carry a commercial
 OCR text layer. `pdftotext -bbox-layout` gives word boxes; grouping them into
-lines and cropping the rendered page at the same coordinates yields image/text
-pairs at scale. Noisy, so this stage teaches letterforms only.
+lines and cropping the rendered page at the same coordinates yields image and
+text pairs at scale. Noisy, so this stage teaches letterforms only.
 
-**Stage 2 — 1,718 human-corrected lines.** Fixes word segmentation and the
-ҙ/ҫ confusions stage 1 cannot teach, because its own labels contain them.
+**Stage 2, 1,718 human-corrected lines.** Fixes word segmentation and the ҙ/ҫ
+confusions stage 1 cannot teach, because its own labels contain them.
 
 Full pipeline, scripts and per-book results:
 <https://github.com/abulyaev/bashkort-ocr>
@@ -110,6 +134,22 @@ Full pipeline, scripts and per-book results:
   1,718 gave 4.24%, and the 1,200-line run scored worse than the 800-line one.
   Past a few hundred corrected lines the remaining error was display type and
   page layout, not data volume.
+
+## Evaluation data
+
+Transcription elsewhere in the project was prefilled with the model's own
+reading for speed, which would make any evaluation drawn from it circular. Two
+earlier evaluation sets here were compromised that way; one, built from "lines
+no model trained on", turned out to be 90% unchanged lines and produced a
+meaningless 0.14% CER.
+
+The figures above therefore come from lines transcribed blind, and the tooling
+enforces it: autofill refuses to write a suggestion onto those rows, and
+training excludes them.
+
+Where the printed source contained an obvious typo, the transcriber wrote the
+correct spelling rather than the misprint. The model therefore loses points for
+reading a misprint correctly, which makes these figures slightly pessimistic.
 
 ## Training data
 
