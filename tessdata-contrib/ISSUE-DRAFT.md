@@ -24,23 +24,23 @@ letters and `kaz` scores 0% on ҫ.
 
 ### Accuracy
 
-420 held-out lines, corrected by a native speaker, excluded from training,
-scored through the `tesseract` CLI:
+157 lines transcribed with no model output in front of the transcriber — no
+prefilled suggestion and no machine reading of the page — cut from parts of the
+books no training data came from, and scored through the `tesseract` CLI:
 
-| model | CER | WER | ҫ recall |
+| model | CER | WER | ҫ |
 |---|---|---|---|
-| **bak (best)** | **4.24%** | **14.71%** | **94%** |
-| bak (fast) | 4.94% | 15.57% | — |
-| kaz | 8.66% | 28.29% | 0% |
-| rus | 22.88% | 73.42% | 0% |
+| **bak (best)** | **2.43%** | **14.88%** | **17/17** |
+| bak (fast) | 3.17% | 15.27% | — |
+| kaz | 5.42% | 24.04% | 0/17 |
+| rus | 21.00% | 76.65% | 0/17 |
 
-Those lines are specifically the ones a previous model got wrong, so they are a
-conservative floor. Corpus-weighted, ordinary pages run nearer 2.0% CER and
-7.7% WER. The model card documents how the evaluation set was built and why,
-including a label-provenance caveat I would rather state than hide: every line
-was transcribed with a model's suggestion prefilled, so the eval uses only
-lines the transcriber corrected, and the numbers are a bracket rather than a
-single measurement.
+Transcription elsewhere in the project was prefilled with the model's own
+reading for speed, which would make any evaluation drawn from it circular. This
+set was cut and labelled specifically to avoid that, and the tooling enforces
+it — autofill will not write a suggestion onto those rows and training excludes
+them. A second, deliberately hard set of 420 lines gives 4.24% CER / 14.71%
+WER. Both are in the model card.
 
 ### What I would submit
 

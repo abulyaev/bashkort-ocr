@@ -33,42 +33,39 @@ at **0%** recall.
 
 ## Results
 
-Measured on 420 held-out lines the model never saw, each transcribed and
-corrected by a native speaker. See [Evaluation](#evaluation) for why this is
-the hardest possible test and what the real-page number is.
+Measured on **157 lines transcribed with no model output in front of the
+transcriber** — no prefilled suggestion, no machine reading of the page. These
+labels owe nothing to any model, which makes this a measurement rather than an
+estimate. Pages were drawn from parts of the books no training data came from.
 
 | model | CER | WER | ҫ | ҙ | ҡ | ғ | ң |
 |---|---|---|---|---|---|---|---|
-| **`bak` (this model)** | **4.24%** | **14.71%** | **94%** | 97% | 96% | 95% | 94% |
-| `kaz` — closest substitute | 8.66% | 28.29% | 0% | 81% | 85% | 93% | 89% |
-| `rus` | 22.88% | 73.42% | 0% | 0% | 0% | 0% | 0% |
+| **`bak` (this model)** | **2.43%** | **14.88%** | **17/17** | 98% | 97% | 99% | 100% |
+| `kaz` — closest substitute | 5.42% | 24.04% | 0/17 | 87% | 87% | 98% | 99% |
+| `rus` | 21.00% | 76.65% | 0/17 | 0% | 0% | 0% | 0% |
 
-Half the character error and half the word error of the nearest alternative,
-and the only model that can produce `ҫ` at all.
-
-**On ordinary pages the error is lower.** The 420 lines above are the subset a
-previous model got *wrong*, so they are a conservative floor, not typical text:
-
-| measured on | CER | WER |
-|---|---|---|
-| corrected lines — hardest, trustworthy labels | 4.24% | 14.71% |
-| uncorrected lines — easiest, see caveat below | 0.41% | 2.75% |
-| **corpus-weighted (41% corrected / 59% not)** | **~2.0%** | **~7.7%** |
-
-Error is concentrated in one book. `Боронғо башҡорт ҡобайырҙары` runs 19.13%
-CER against 2.13–3.66% for everything else; its held-out lines land on front
-matter set in large display capitals the model has not learned (`СӘҒИТОВ` read
-as `СОҒИТОВ`). Excluding it, the hard set is **2.23% CER / 12.36% WER**.
+Less than half the character error of the nearest alternative, and the only
+model that produces `ҫ` at all. `ҫ` is reported as a count because the set
+holds 17 instances; the percentage would overstate the precision.
 
 | book | lines | CER | WER |
 |---|---|---|---|
-| Боронғо башҡорт ҡобайырҙары | 60 | 19.13% | 32.36% |
-| Башҡорт халыҡ әкиәттәре | 60 | 3.66% | 18.45% |
-| Ҡара яу | 60 | 2.59% | 13.30% |
-| Башҡорт драматургияһы антологияһы | 60 | 2.47% | 16.86% |
-| Йәдкәр | 60 | 2.18% | 12.93% |
-| Ҡолой кантон | 60 | 2.13% | 10.47% |
-| doc257928583 | 60 | 0.39% | 2.09% |
+| Башҡорт драматургияһы антологияһы | 24 | 4.82% | 32.31% |
+| Боронғо башҡорт ҡобайырҙары | 21 | 3.21% | 19.17% |
+| Ҡара яу | 14 | 3.17% | 15.49% |
+| Йәдкәр | 23 | 2.86% | 16.07% |
+| Башҡорт халыҡ әкиәттәре | 25 | 2.66% | 13.94% |
+| doc257928583 | 25 | 1.07% | 9.58% |
+| Ҡолой кантон | 25 | 0.68% | 4.64% |
+
+A second, larger set of 420 lines — drawn from lines a previous model got
+wrong, so a deliberately hard subset — gives 4.24% CER / 14.71% WER.
+
+Word error is the weak spot, and it is concentrated in drama: speaker
+attributions, stage directions and dash-led dialogue, where the characters come
+out right and the word boundaries do not. Character error is worst on the epic
+poetry, whose front matter is set in large display capitals the model has never
+seen (`СӘҒИТОВ` read as `СОҒИТОВ`).
 
 ## Install
 
@@ -182,22 +179,26 @@ training consumes the *corrected* lines, so what was left was 90% lines
 accepted verbatim — two books were 100% — and the model scored 0.14% CER on
 them. That number was meaningless and is not reported here.
 
-The set used now is drawn from **corrected lines only**, the single kind whose
-label a human demonstrably wrote, and is held out *before* training. The cost
-is that corrected lines are by construction the ones the model got wrong, so
-4.24% reads worse than any real page. It is a floor. The companion set of
-uncorrected lines gives the optimistic bound, 0.41%, and the truth lies between.
+**This was fixed by measuring it properly.** 175 lines were cut from pages no
+training data came from and transcribed with the suggestion box empty and the
+page reading suppressed; 157 were legible enough to label. `tools/autofill.py`
+refuses to touch them and `tools/train_human.py` excludes them from training,
+so they stay independent. The headline figures come from that set.
 
-**Known limitation.** No label in this project is fully independent of a model,
-so every figure here is a bracket rather than a measurement. Closing that
-requires a few hundred lines transcribed with prefill disabled. That work is
-not done, and the numbers should be read with it in mind.
+Two estimates made before it existed are worth recording, because one held and
+one did not. Weighting the hard and easy sets by their share of the corpus
+predicted ~2.0% CER and ~7.7% WER. The real figures are 2.43% and **14.88%**.
+Character error was close; word error was out by a factor of two, because on a
+line accepted verbatim the label *is* the model's output, so its word error is
+near zero by construction and dragged the weighted estimate down. The
+"optimistic bound" was an artifact, not a bound. Measured word error turned out
+to match the hard set almost exactly — 14.88% against 14.71%.
 
 Scoring:
 
 ```bash
-python3 tools/eval_holdout.py --per-book bak
-python3 tools/eval_holdout.py --list eval_verbatim.list bak
+python3 tools/eval_holdout.py --list eval_blind.list --per-book bak   # unbiased
+python3 tools/eval_holdout.py --per-book bak                          # hard subset
 ```
 
 ## Reproducing
@@ -245,7 +246,8 @@ Usable, and better than every alternative, but not finished. Known gaps:
 - Display and title type is weak — the one book dominated by it runs 19% CER
 - Drama layout (speaker attributions, stage directions) drives word error
 - More transcription will not fix either; the learning curve is flat
-- No label is independent of a model; see [Evaluation](#evaluation)
+- Word error (14.88%) is high relative to character error; drama layout is the
+  main driver
 - Not yet submitted to `tessdata_contrib` — a prepared submission, including
   an integer `fast` build, is in [tessdata-contrib/](tessdata-contrib/)
 

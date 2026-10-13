@@ -35,42 +35,47 @@ question of accuracy — the letter cannot be output at all.
 
 ## Accuracy
 
-420 held-out lines, transcribed and corrected by a native speaker, excluded
-from training. Scored through the `tesseract` CLI, not `lstmeval`.
+157 lines transcribed with **no model output in front of the transcriber** — no
+prefilled suggestion, no machine reading of the page — cut from parts of the
+books no training data came from. Scored through the `tesseract` CLI, not
+`lstmeval`, which cannot see word splitting.
 
 | model | CER | WER | ҫ | ҙ | ҡ | ғ | ң |
 |---|---|---|---|---|---|---|---|
-| **bak (best)** | **4.24%** | **14.71%** | **94%** | 97% | 96% | 95% | 94% |
-| bak (fast) | 4.94% | 15.57% | — | — | — | — | — |
-| kaz | 8.66% | 28.29% | 0% | 81% | 85% | 93% | 89% |
-| rus | 22.88% | 73.42% | 0% | 0% | 0% | 0% | 0% |
+| **bak (best)** | **2.43%** | **14.88%** | **17/17** | 98% | 97% | 99% | 100% |
+| bak (fast) | 3.17% | 15.27% | — | — | — | — | — |
+| kaz | 5.42% | 24.04% | 0/17 | 87% | 87% | 98% | 99% |
+| rus | 21.00% | 76.65% | 0/17 | 0% | 0% | 0% | 0% |
 
-**On ordinary text the error is lower.** The 420 lines above are specifically
-the lines a previous model got wrong, which makes this a conservative floor
-rather than a typical page:
+`ҫ` is given as a count: the set holds 17 instances, and a percentage would
+overstate the precision.
 
-| measured on | CER | WER |
-|---|---|---|
-| corrected lines (hardest; labels written by a human) | 4.24% | 14.71% |
-| uncorrected lines (easiest; see caveat) | 0.41% | 2.75% |
-| corpus-weighted, 41% corrected / 59% not | ~2.0% | ~7.7% |
+Per book:
 
-Error concentrates in one source. A book of epic poetry whose held-out lines
-fall on front matter set in large display capitals runs 19.13% CER; excluding
-it the hard set is 2.23% CER / 12.36% WER.
+| book | lines | CER | WER |
+|---|---|---|---|
+| drama anthology | 24 | 4.82% | 32.31% |
+| epic poetry | 21 | 3.21% | 19.17% |
+| historical novel | 14 | 3.17% | 15.49% |
+| literary collection | 23 | 2.86% | 16.07% |
+| folk tales | 25 | 2.66% | 13.94% |
+| prose collection | 25 | 1.07% | 9.58% |
+| historical prose | 25 | 0.68% | 4.64% |
 
-### Caveat on label provenance
+A second, deliberately hard set of 420 lines — drawn from lines a previous
+model got wrong — gives 4.24% CER / 14.71% WER.
 
-Transcription was prefilled with the previous model's reading for speed. On a
-line the transcriber accepted unchanged, the ground truth is that model's own
-output, so scoring against it is circular. The evaluation set above is drawn
-**only from lines the transcriber corrected** — the one category whose label a
-human demonstrably wrote — and was held out before training.
+### On how the evaluation set was built
 
-No label in this project is fully independent of a model, so these figures are
-a bracket rather than a single measurement. This is stated plainly because an
-earlier evaluation here, built from "lines no model trained on", turned out to
-be 90% uncorrected lines and produced a meaningless 0.14% CER.
+Transcription was prefilled with the previous model's reading for speed, so on
+any line accepted unchanged the ground truth would be that model's own output
+and scoring against it would be circular. Two earlier evaluation sets here were
+compromised that way; one, built from "lines no model trained on", turned out
+to be 90% unchanged lines and produced a meaningless 0.14% CER.
+
+The figures above therefore come from lines transcribed blind. The tooling
+enforces it: autofill refuses to write a suggestion onto those rows, and
+training excludes them.
 
 ## Training procedure
 
