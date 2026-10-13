@@ -39,8 +39,8 @@ data was drawn from.
 
 | model | CER | WER | ҫ | ҙ | ҡ | ғ | ң |
 |---|---|---|---|---|---|---|---|
-| **`bak` (this model)** | **2.43%** | **14.88%** | **17/17** | 98% | 97% | 99% | 100% |
-| `kaz` — closest substitute | 5.42% | 24.04% | 0/17 | 87% | 87% | 98% | 99% |
+| **`bak` (this model)** | **2.32%** | **13.99%** | **17/17** | 98% | 96% | 99% | 100% |
+| `kaz`, closest substitute | 5.42% | 24.04% | 0/17 | 87% | 87% | 98% | 99% |
 | `rus` | 21.00% | 76.65% | 0/17 | 0% | 0% | 0% | 0% |
 
 Less than half the character error of the nearest alternative, and the only
@@ -49,16 +49,23 @@ holds 17 instances; the percentage would overstate the precision.
 
 | book | lines | CER | WER |
 |---|---|---|---|
-| Башҡорт драматургияһы антологияһы | 24 | 4.82% | 32.31% |
-| Боронғо башҡорт ҡобайырҙары | 21 | 3.21% | 19.17% |
-| Ҡара яу | 14 | 3.17% | 15.49% |
-| Йәдкәр | 23 | 2.86% | 16.07% |
-| Башҡорт халыҡ әкиәттәре | 25 | 2.66% | 13.94% |
-| doc257928583 | 25 | 1.07% | 9.58% |
-| Ҡолой кантон | 25 | 0.68% | 4.64% |
+| Башҡорт драматургияһы антологияһы | 24 | 4.48% | 31.54% |
+| Йәдкәр | 23 | 3.22% | 16.67% |
+| Ҡара яу | 14 | 3.17% | 12.68% |
+| Боронғо башҡорт ҡобайырҙары | 21 | 2.84% | 18.33% |
+| Башҡорт халыҡ әкиәттәре | 25 | 2.47% | 13.33% |
+| doc257928583 | 25 | 0.89% | 7.78% |
+| Ҡолой кантон | 25 | 0.60% | 3.61% |
 
-A second, larger set of 420 lines gives 4.24% CER / 14.71% WER. Those are
+A second, larger set of 420 lines gives 4.27% CER / 13.03% WER. Those are
 lines a previous model got wrong, so it is a deliberately hard subset.
+
+The shipped model carries no word, punctuation or number dawgs. Measurement
+showed they made word error worse on every evaluation set, most likely because
+Bashkort's agglutinative morphology outruns any fixed wordlist: a form absent
+from the list gets pulled toward a present one, breaking a whole word while
+changing one or two characters. The langdata is in `langdata/` for anyone who
+wants to rebuild a dictionary build.
 
 Word error is the weak spot, and it is concentrated in drama: speaker
 attributions, stage directions and dash-led dialogue, where the characters come
@@ -185,12 +192,12 @@ so they stay independent. The headline figures come from that set.
 
 Two estimates made before that set existed are recorded here, because one held
 and one did not. Weighting the hard and easy sets by their share of the corpus
-predicted roughly 2.0% CER and 7.7% WER. The real figures are 2.43% and 14.88%.
+predicted roughly 2.0% CER and 7.7% WER. The real figures are 2.32% and 13.99%.
 Character error came close. Word error was out by a factor of two, because on a
 line accepted verbatim the label is the model's own output, so its word error is
 near zero by construction and dragged the weighted estimate down. The optimistic
-bound turned out to be an artifact. Measured word error matched the hard set
-almost exactly, 14.88% against 14.71%.
+bound turned out to be an artifact. Measured word error came out close to the
+hard set, 13.99% against 13.03%, rather than halfway between the two bounds.
 
 Scoring:
 
@@ -242,12 +249,11 @@ See [docs/alphabet.md](docs/alphabet.md) and [docs/orthography.md](docs/orthogra
 Usable, and better than every alternative, but not finished. Known gaps:
 
 - Display and title type is weak; the one book dominated by it runs 19% CER
-- Drama layout (speaker attributions, stage directions) drives word error
+- Word error (13.99%) is high relative to character error. Drama layout is the
+  main driver, at 31.54% WER on the drama anthology
 - More transcription will not fix either; the learning curve is flat
-- Word error (14.88%) is high relative to character error; drama layout is the
-  main driver
-- Not yet submitted to `tessdata_contrib`. A prepared submission, including
-  an integer `fast` build, is in [tessdata-contrib/](tessdata-contrib/)
+- Submitted to `tessdata_contrib`; the submission is in
+  [tessdata-contrib/](tessdata-contrib/)
 
 ## License
 

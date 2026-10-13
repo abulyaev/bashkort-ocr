@@ -93,13 +93,13 @@ removed.
 
 The likely cause is morphology. Bashkort is agglutinative and inflects heavily,
 so a fixed wordlist of any practical size cannot cover the inflectional space.
-A word form absent from the list gets pulled toward a present one, which breaks
-a whole word while changing only one or two characters. That is precisely the
-shape of the measurements: large WER effect, negligible CER effect.
+A word form absent from the list gets pulled toward a present one. That breaks
+a whole word while changing one or two characters, which is the shape the
+measurements show: a large WER effect and almost no CER effect.
 
-This may generalise to the other agglutinative languages in tessdata. It is one
-language's measurement, not a proof, but it is cheap for anyone to check with
-`combine_tessdata -u`, deleting the three dawg files, and repacking.
+The same may hold for other agglutinative languages in tessdata. This is one
+language's measurement and I would not read more into it than that, but it is
+cheap to check: `combine_tessdata -u`, delete the three dawg files, repack.
 
 ## Training procedure
 
